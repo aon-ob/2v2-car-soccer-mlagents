@@ -105,3 +105,21 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# ==================================
+# Python & ML-Agents (Required)
+# ==================================
+.venv*/
+venv*/
+ENV/
+env/
+__pycache__/
+*.pyc
+
+# Heavy ML-Agents training checkpoints (keep only final exported .onnx in Assets/)
+results/
+
+# OS / Cloud Sync metadata
+.DS_Store
+Thumbs.db
+desktop.ini
