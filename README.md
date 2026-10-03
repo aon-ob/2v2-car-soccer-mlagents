@@ -14,6 +14,9 @@ A 2D top-down vehicle soccer environment built in Unity and trained using Multi-
 
 ---
 
+<video src="https://github.com/user-attachments/assets/6d067085-b55e-406c-90e8-82acef46a326" controls="controls" style="max-width: 750px;">
+</video>
+
 ## How It Works
 
 ### Observations (What each car sees)
