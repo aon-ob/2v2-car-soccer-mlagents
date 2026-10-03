@@ -81,3 +81,71 @@ behaviors:
     max_steps: 400000000
     time_horizon: 64
     summary_freq: 20000
+```
+
+## How to Run
+
+### Requirements
+* Unity 2022.3 LTS (or newer) with Universal Render Pipeline (URP)
+* Python 3.10
+* PyTorch (with CUDA support for GPU training)
+* `mlagents==1.1.0`
+
+---
+
+### Option 1: Watch the Trained AI Play (Inference)
+
+You do not need to install Python or train anything to watch the bots play:
+
+1. Clone this repository:
+   ```bash
+   git clone [https://github.com/aon-ob/2v2-car-soccer-mlagents.git](https://github.com/aon-ob/2v2-car-soccer-mlagents.git)
+   ```
+
+2. Open **Unity Hub**, click **Add > Add project from disk**, and select the cloned folder.
+3. In the Unity Project browser, open the match scene `"Run Match"` located at `Assets/Scenes/Run Match.unity`.
+4. Ensure the cars have their **Behavior Type** set to `Inference Only` and that the trained model (`SoccerCar-Final.onyx`) is assigned to the **Model** slot.
+5. Click **Play** at the top of the Unity Editor to watch the 2v2 match.
+
+---
+
+### Option 2: Train or Resume the Agents from Scratch
+
+If you want to train the models yourself:
+
+1. **Set up the Python 3.10 virtual environment:**
+```cmd
+# From the project root folder
+py -3.10 -m venv .venv-mlagents
+call .venv-mlagents\Scripts\activate
+
+```
+
+
+2. **Install ML-Agents and CUDA PyTorch:**
+```cmd
+pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 --extra-index-url [https://download.pytorch.org/whl/cu121](https://download.pytorch.org/whl/cu121)
+pip install mlagents==1.1.0
+
+```
+
+
+3. **Start the training session:**
+* To **resume** from the checkpoint:
+```cmd
+mlagents-learn soccer_poca.yaml --run-id=2DRL_Run_01 --resume
+
+```
+
+
+* To start a **brand new** training run:
+```cmd
+mlagents-learn soccer_poca.yaml --run-id=MyNewRun --force
+
+```
+
+
+
+
+4. **Connect Unity:**
+* When the terminal prints `Listening on port 5004. Start training by pressing the Play button in the Unity Editor`, press **Play** in Unity to begin simulating.
