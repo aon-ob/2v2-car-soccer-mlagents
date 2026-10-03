@@ -151,4 +151,4 @@ mlagents-learn soccer_poca.yaml --run-id=MyNewRun --force
 
 
 4. **Connect Unity:**
-* When the terminal prints `Listening on port 5004. Start training by pressing the Play button in the Unity Editor`, press **Play** in Unity to begin simulating.
+* When the terminal prints `Listening on port 5004. Start training by pressing the Play button in the Unity Editor`, make sure you have the `"train"` scene opened and press **Play** in Unity to begin simulating.
