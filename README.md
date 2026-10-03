@@ -1,42 +1,55 @@
-# Autonomous 2v2 Car Soccer AI — Multi-Agent Reinforcement Learning (MA-POCA)
+# 2v2 Autonomous Car Soccer using Reinforcement Learning
 
-![Unity](https://img.shields.io/badge/Unity-URP-blue?logo=unity)
-![ML-Agents](https://img.shields.io/badge/Unity%20ML--Agents-v1.1.0-orange)
-![PyTorch](https://img.shields.io/badge/PyTorch-CUDA%20Accelerated-ee4c2c?logo=pytorch)
-![License](https://img.shields.io/badge/License-MIT-green)
-
-An autonomous 2v2 multi-agent soccer environment built in Unity using the Universal Render Pipeline (URP) and trained using Multi-Agent Post-Operator Critic-Actor (**MA-POCA**). 
-
-The agents start with zero prior knowledge of vehicle control, soccer tactics, or spatial awareness, and learn complex team play, rotational defense, passing, and striking over **55M+ environment simulation steps**.
+A 2D top-down vehicle soccer environment built in Unity and trained using Multi-Agent Reinforcement Learning (Unity ML-Agents). Four autonomous cars learn to drive, defend, rotate, and score goals from complete scratch using self-play over 1.7 billion simulation steps.
 
 ---
 
-## Technical Overview
+## Project Overview
 
-* **Algorithm:** Multi-Agent POCA (Centralized Critic, Decentralized Execution) with Self-Play
-* **Simulation Architecture:** 16 decentralized parallel stadiums running concurrent continuous physics
-* **Observation Space:** 21 ego-centric continuous observations (normalized field positions, linear/angular velocities, relative ball kinematics, goal headings, teammate/adversary offsets, and boost tank fill)
-* **Action Space:** Mixed continuous (Steering, Acceleration/Reverse) and discrete (Rocket Boost)
-* **Training Throughput:** Scaled up to 25,000+ steps/second via headless GPU execution
+* **Engine:** Unity (Universal Render Pipeline)
+* **ML Framework:** Unity ML-Agents (Release 21 / v1.1.0) with PyTorch
+* **Algorithm:** MA-POCA (Multi-Agent POst-operator Critic-Actor) with Self-Play
+* **Setup:** 16 training arenas running side-by-side to gather data fast
+* **Trained Steps:** 55.5M+ environment steps
 
 ---
 
-## System Architecture & Training Methodology
+## How It Works
 
-### 1. The Multi-Agent Credit Assignment Problem
-In cooperative 2v2 soccer, independent reinforcement learning agents suffer from selfish reward-seeking: both teammates dive headlong into the ball (the "double-commit" trap), leaving their own net wide open.
+### Observations (What each car sees)
+Each car receives 21 normalized numeric inputs every decision step:
+* Own position, velocity, and facing direction
+* Relative distance and direction to the ball
+* Ball velocity and heading towards both goals
+* Positions and relative distances of the teammate and opponents
+* Current boost meter level
 
-To enforce tactical division of labor without hardcoded heuristic state machines, the reward formulation incorporates **dynamic role gating**:
-* **1st Man (Striker):** Dynamically computed as the agent nearest to the ball. The 1st man is eligible for ball-contact rewards (`+0.06`) and directional shot propulsion shaping (`Vector2.Dot(ballVelocity, goalDir) * 0.0005`).
-* **2nd Man (Support/Anchor):** Gated out of ball-hunting rewards. Instead, the 2nd man receives positive return for holding defensive depth between the ball and home goal (`+0.0004/step`), while receiving negative penalties for crowding within $4.5$ units of the striker or blocking the primary shot trajectory.
+### Actions (What each car controls)
+* **Steering:** Continuous input (turn left / turn right)
+* **Throttle:** Continuous input (drive forward / reverse)
+* **Boost:** Discrete trigger (burst of speed when boost is available)
 
-### 2. Physical Stall Elimination & Kinematics
-Standard simulated vehicle physics tie steering radius to linear velocity ($v / v_{\max}$). When agents struck perimeter walls head-on, velocity dropped to zero, locking the steering wheels and trapping the policy in continuous forward-throttle local optima.
-* Implemented a clamped low-speed turning threshold (`Mathf.Clamp(speed / 6f, 0.35f, 1f)`), allowing cars to rotate their chassis from a dead stop.
-* Added anti-stall throttle penalties for agents holding high acceleration inputs with near-zero forward momentum.
-* Stripped collider surface friction via custom `PhysicsMaterial2D` assets to eliminate physical corner wedging.
+---
 
-### 3. Hyperparameter Configuration (`soccer_poca.yaml`)
+## Key Challenges & Solutions
+
+### Stopping Teammates from Chasing the Same Ball ("Double-Committing")
+Early in training, both cars on the same team would chase the ball at the same time like little kids in peewee soccer. This left our own goal completely unguarded and caused teammates to bump into each other.
+
+To fix this, I added a dynamic role system in the C# environment code:
+* **First Man (Closest to ball):** Gets rewarded for touching the ball and hitting it toward the opponent's goal.
+* **Second Man (Support / Defender):** Does not get points for rushing the ball. Instead, they get small rewards for staying behind the play on defense and receive penalties if they crowd too close to their teammate.
+* This taught the agents natural rotation: one attacks while the other covers the backfield.
+
+### Fixing Cars Getting Stuck on Arena Walls
+Because steering speed was tied to forward velocity, cars that hit the arena walls head-on dropped to zero speed. This locked their wheels so they couldn't turn to back up, leaving them trapped holding the throttle against the wall.
+* Added a minimum turning radius so cars can pivot even at low speeds or a complete stop.
+* Added an anti-stall penalty for holding forward throttle while staying stationary.
+* Used zero-friction 2D physics materials along the walls so cars don't wedge into corners.
+
+---
+
+## Training Configuration (`soccer_poca.yaml`)
 
 ```yaml
 behaviors:
@@ -65,6 +78,6 @@ behaviors:
       window: 10
       play_against_latest_model_ratio: 0.5
       initial_elo: 1200.0
-    max_steps: 75000000
+    max_steps: 400000000
     time_horizon: 64
     summary_freq: 20000
